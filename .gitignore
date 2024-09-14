@@ -1,0 +1,6 @@
+.env
+key.zip
+password_vault.db
+/.venv
+/__pycache__
+tables.md
