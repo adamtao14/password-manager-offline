@@ -1,4 +1,4 @@
-# Offile password manager
+# Offline password manager
 
 This is a simple terminal based offline password manager that stores your passwords in a local sqlite3 vault, the passwords are encrypted using a **256 bit** symmetric key with **AES** algorithm in **CBC** mode. The encryption key is stored in an encrypted zip file protected by the **master password** chosen during the vault generation, this helps prevent any password leaks in the event of a unauthorized access to the database. Upon registration the user is given a unique **recovery** key that must be safely stored as it is the only way of recovering the vault in case he forgets the master password.
 
