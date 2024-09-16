@@ -45,6 +45,14 @@ def get_user_password_and_salt():
     connection.close()
     return user_data
 
+def get_user_recovery_and_salt():
+    connection = sqlite3.connect(os.getenv('VAULT_NAME'))
+    cursor_obj = connection.cursor()
+    cursor_obj.execute("SELECT Recovery_key, Salt_recovery FROM USER LIMIT 1")
+    user_data = cursor_obj.fetchone()
+    connection.close()
+    return user_data
+
 def add_password(encrypted_password, email, name):
     connection = sqlite3.connect(os.getenv('VAULT_NAME'))
     cursor_obj = connection.cursor()
@@ -90,5 +98,12 @@ def update_master_password(new_hashed_password, new_salt):
     connection = sqlite3.connect(os.getenv('VAULT_NAME'))
     cursor_obj = connection.cursor()
     cursor_obj.execute("UPDATE USER SET Password = ?, Salt_master = ? WHERE rowid = 1",(new_hashed_password,new_salt))
+    connection.commit()
+    connection.close()
+
+def update_recovery_key(new_hashed_recovery, new_salt):
+    connection = sqlite3.connect(os.getenv('VAULT_NAME'))
+    cursor_obj = connection.cursor()
+    cursor_obj.execute("UPDATE USER SET Recovery_key = ?, Salt_recovery = ? WHERE rowid = 1",(new_hashed_recovery,new_salt))
     connection.commit()
     connection.close()

@@ -1,12 +1,11 @@
-import os,click
+import os,click,getpass,pyperclip
 from dotenv import load_dotenv
-import pyperclip
 from key import *
 from vault import *
-from auth import login, validate_master_password, hash_password
+from auth import login, validate_master_password, hash_password,recovery
 from colorama import Fore, Style
 from db_functions import *
-import getpass
+
 
 load_dotenv()
 
@@ -23,16 +22,18 @@ def register(master_password):
         if errors != "":
             print(Fore.RED,errors)
             print(Style.RESET_ALL)
+            return
         create_vault()
         create_tables()
-        recovery_key = ''.join(secrets.choice(string.ascii_uppercase + string.digits) for i in range(32))
+        recovery_key = generate_recovery_key()
         salt_master,hashed_master_password = hash_password(master_password)
         salt_recovery,hashed_recovery_key = hash_password(recovery_key)
         create_user(salt_master,hashed_master_password,hashed_recovery_key,salt_recovery)
         encryption_key = generate_key()
-        if not key_exists():
+        if not key_exists() and not recovery_exists():
             save_key(encryption_key, master_password)
-        print(Fore.GREEN,"Encryption key generated, keep it in a safe place", recovery_key)
+            save_recovery_key(encryption_key, recovery_key)
+        print(Fore.GREEN,"Encryption key generated in",os.getenv('ZIP_NAME'))
         print(Fore.YELLOW,"Your recovery key is: ", recovery_key)
         print("The recovery key is the ONLY way to get your vault back in case you forget the master password, keep it safe")
         print(Style.RESET_ALL)
@@ -130,29 +131,63 @@ def change(old_password,new_password):
         return
     
     if login(old_password):
-        if vault_already_exists():
+        if vault_already_exists() and key_exists():
+            key = read_key_from_zip(old_password)
+            '''
             passwords = list_passwords()
             if passwords:
                 print(old_password," | ",new_password)
-                key = read_key_from_zip(old_password)
                 cipher = initialize_cipher(key)
                 for password in passwords:
                     old_encrypted_password = password[1]
                     old_decrypted_password = decrypt_password(cipher, old_encrypted_password)
                     new_encrypted_password = encrypt_password(cipher, old_decrypted_password)
                     update_saved_password(password[0], new_encrypted_password)
-            delete_key()
+            '''
+            delete_key(os.getenv('ZIP_NAME'))
             save_key(key,new_password)
             new_salt,new_hash = hash_password(new_password)
             update_master_password(new_hash,new_salt)
             print(f"{Fore.GREEN}Master password changed successfully{Fore.RESET}")
         else:
-            print(f"{Fore.RED}Error: Vault does not exist{Fore.RESET}")
+            print(f"{Fore.RED}Error: Vault or key does not exist{Fore.RESET}")
     else:
         print(f"{Fore.RED}Error: The old password is incorrect{Fore.RESET}")
     
+@click.command
+@click.option('-rk','--recovery-key', prompt="Insert the recovery key")
+@click.option('-np','--new-password', prompt="Insert the new password")
+def recover(recovery_key, new_password):
+    if vault_already_exists() and recovery_exists() and key_exists():
+        if recovery(recovery_key):
+            errors = validate_master_password(new_password)
+            if errors:
+                print(f"{Fore.RED}Error: {errors}\n{Fore.RESET}")
+                return
+            else:
+                new_salt_master,new_hash_master = hash_password(new_password)
+                new_recovery_key = generate_recovery_key()
+                new_salt_recovery,new_hash_recovery = hash_password(new_recovery_key)
+                update_master_password(new_hash_master,new_salt_master)
+                update_recovery_key(new_hash_recovery,new_salt_recovery)
+                
+                encryption_key = read_key_from_recovery_zip(recovery_key)
+                if encryption_key:
+                    delete_key(os.getenv('ZIP_NAME'))
+                    delete_key(os.getenv('RECOVERY_ZIP_NAME'))
+                    save_key(encryption_key,new_password)
+                    save_recovery_key(encryption_key,new_password)
+                    print(f"{Fore.GREEN}Master password changed successfully{Fore.RESET}")
+                else:
+                    print(f"{Fore.RED}Error: Problem reading the recovery key{Fore.RESET}")
+        else:
+            print(f"{Fore.RED}Error: The recovery key is incorrect{Fore.RESET}")
+    else:
+        print(f"{Fore.RED}Error: Vault or key does not exist{Fore.RESET}")
 
-    
+                    
+
+
 
 
 
@@ -162,6 +197,7 @@ app_commands.add_command(list)
 app_commands.add_command(decrypt)
 app_commands.add_command(delete)
 app_commands.add_command(change)
+app_commands.add_command(recover)
 
 if __name__ == "__main__":
     app_commands()
