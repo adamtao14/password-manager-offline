@@ -32,5 +32,6 @@ The database is structured as follows:
 - **decrypt**: Decrypts a password from the vault
 - **change**: Changes the master password of the encryption key
 - **recover**: Recover your vault if you forget your master password
+- **generate**: Generate a strong password
 
 
