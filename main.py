@@ -133,17 +133,6 @@ def change(old_password,new_password):
     if login(old_password):
         if vault_already_exists() and key_exists():
             key = read_key_from_zip(old_password)
-            '''
-            passwords = list_passwords()
-            if passwords:
-                print(old_password," | ",new_password)
-                cipher = initialize_cipher(key)
-                for password in passwords:
-                    old_encrypted_password = password[1]
-                    old_decrypted_password = decrypt_password(cipher, old_encrypted_password)
-                    new_encrypted_password = encrypt_password(cipher, old_decrypted_password)
-                    update_saved_password(password[0], new_encrypted_password)
-            '''
             delete_key(os.getenv('ZIP_NAME'))
             save_key(key,new_password)
             new_salt,new_hash = hash_password(new_password)
@@ -185,7 +174,15 @@ def recover(recovery_key, new_password):
     else:
         print(f"{Fore.RED}Error: Vault or key does not exist{Fore.RESET}")
 
-                    
+@click.command
+@click.option('-l','--length', default="16")
+def generate(length=16):
+    if int(length) < 16:
+        print(f"{Fore.RED}Error: The password length must be at least 16 characters{Fore.RESET}")
+        return
+    else:
+        password = generate_strong_password(int(length))
+        print(f"{Fore.GREEN}Generated password: {password}{Fore.RESET}")
 
 
 
@@ -198,6 +195,7 @@ app_commands.add_command(decrypt)
 app_commands.add_command(delete)
 app_commands.add_command(change)
 app_commands.add_command(recover)
+app_commands.add_command(generate)
 
 if __name__ == "__main__":
     app_commands()

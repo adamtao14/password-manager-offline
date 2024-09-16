@@ -1,5 +1,5 @@
 from cryptography.fernet import Fernet
-import os, pyzipper,secrets,base64,string
+import os, pyzipper,secrets,base64,string,random
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.backends import default_backend
@@ -67,4 +67,18 @@ def read_key_from_recovery_zip(recovery_key):
         encryption_key = zf.read(os.getenv('KEY_NAME'))
     
     return encryption_key
+
+
+
+def generate_strong_password(length=16):
+    all_characters = string.ascii_letters + string.digits + string.punctuation
+    password = [
+        random.choice(string.ascii_lowercase),  
+        random.choice(string.ascii_uppercase),  
+        random.choice(string.digits),           
+        random.choice(string.punctuation)       
+    ]
+    password += random.choices(all_characters, k=length - 4)
+    random.shuffle(password)    
+    return ''.join(password)
 
