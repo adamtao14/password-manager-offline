@@ -41,7 +41,7 @@ def register(master_password):
         print(Fore.RED,"Vault already exists, please use the login option to access your vault")
 
 @click.command
-@click.option('-p','--password', prompt="Insert the password to save")
+@click.option('-p','--password')
 @click.option('-e','--email', prompt="Insert the email to save")
 @click.option('-n','--name', prompt="Insert the name to save", default="")
 def add(password, email, name):
@@ -55,6 +55,8 @@ def add(password, email, name):
     if master_password and login(master_password):
         key = read_key_from_zip(master_password)
         cipher = initialize_cipher(key)
+        if not password:
+            password = generate_strong_password()
         encrypted_password = encrypt_password(cipher, password)
         add_password(encrypted_password, email, name)
         print(f"{Fore.GREEN}Password saved successfully{Fore.RESET}")
@@ -176,13 +178,17 @@ def recover(recovery_key, new_password):
 
 @click.command
 @click.option('-l','--length', default="16")
-def generate(length=16):
+@click.option('-c','--copy', is_flag=True)
+def generate(length=16,copy=False):
     if int(length) < 16:
         print(f"{Fore.RED}Error: The password length must be at least 16 characters{Fore.RESET}")
         return
     else:
         password = generate_strong_password(int(length))
         print(f"{Fore.GREEN}Generated password: {password}{Fore.RESET}")
+        if copy:
+                pyperclip.copy(password)
+                print(f"{Fore.GREEN}Copied to clipboard!\n{Fore.RESET}")    
 
 
 
