@@ -51,7 +51,7 @@ def add(password, email, name):
     if not vault_already_exists():
             print(f"{Fore.RED}Error: Vault does not exist{Fore.RESET}")
             return
-    master_password = getpass.getpass("Insert the master password: ")
+    master_password = getpass.getpass("Insert the master password:")
     if master_password and login(master_password):
         key = read_key_from_zip(master_password)
         cipher = initialize_cipher(key)

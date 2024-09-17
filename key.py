@@ -71,7 +71,7 @@ def read_key_from_recovery_zip(recovery_key):
 
 
 def generate_strong_password(length=16):
-    all_characters = string.ascii_letters + string.digits + string.punctuation
+    all_characters = string.ascii_letters + string.digits + '/.-_=/()@#+-'
     password = [
         random.choice(string.ascii_lowercase),  
         random.choice(string.ascii_uppercase),  
