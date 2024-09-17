@@ -131,7 +131,6 @@ def change(old_password,new_password):
     if errors:
         print(f"{Fore.RED}Error: {errors}\n{Fore.RESET}")
         return
-    
     if login(old_password):
         if vault_already_exists() and key_exists():
             key = read_key_from_zip(old_password)

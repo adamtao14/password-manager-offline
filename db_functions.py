@@ -24,86 +24,76 @@ def create_tables():
             ); """
     cursor_obj.execute(table)
     connection.commit()
-    connection.close()
-    # print success
-    
+    connection.close()    
     print("Tables created successfully")
 
-def create_user(salt_master,hashed_master_password, hashed_recovery_key,salt_recovery):
+
+def execute_query(query, params=(), fetch_one=False, fetch_all=False, commit=False):
     connection = sqlite3.connect(os.getenv('VAULT_NAME'))
     cursor_obj = connection.cursor()
-    new_user = (hashed_master_password,hashed_recovery_key,salt_master,salt_recovery)
-    cursor_obj.execute("INSERT INTO USER (Password, Recovery_key, Salt_master, Salt_recovery) VALUES (?, ?, ?, ?)", new_user)
-    connection.commit()
+    cursor_obj.execute(query, params)
+    
+    result = None
+    if fetch_one:
+        result = cursor_obj.fetchone()
+    elif fetch_all:
+        result = cursor_obj.fetchall()
+    
+    if commit:
+        connection.commit()
+    
     connection.close()
+    return result
+
+# User-related functions
+def create_user(salt_master, hashed_master_password, hashed_recovery_key, salt_recovery):
+    query = """
+    INSERT INTO USER (Password, Recovery_key, Salt_master, Salt_recovery)
+    VALUES (?, ?, ?, ?)
+    """
+    params = (hashed_master_password, hashed_recovery_key, salt_master, salt_recovery)
+    execute_query(query, params, commit=True)
 
 def get_user_password_and_salt():
-    connection = sqlite3.connect(os.getenv('VAULT_NAME'))
-    cursor_obj = connection.cursor()
-    cursor_obj.execute("SELECT Password, Salt_master FROM USER LIMIT 1")
-    user_data = cursor_obj.fetchone()
-    connection.close()
-    return user_data
+    query = "SELECT Password, Salt_master FROM USER LIMIT 1"
+    return execute_query(query, fetch_one=True)
 
 def get_user_recovery_and_salt():
-    connection = sqlite3.connect(os.getenv('VAULT_NAME'))
-    cursor_obj = connection.cursor()
-    cursor_obj.execute("SELECT Recovery_key, Salt_recovery FROM USER LIMIT 1")
-    user_data = cursor_obj.fetchone()
-    connection.close()
-    return user_data
-
-def add_password(encrypted_password, email, name):
-    connection = sqlite3.connect(os.getenv('VAULT_NAME'))
-    cursor_obj = connection.cursor()
-    new_password = (encrypted_password, email, name)
-    cursor_obj.execute("INSERT INTO PASSWORD (Encrypted_password, Email, Name) VALUES (?, ?, ?)", new_password)
-    connection.commit()
-    connection.close()
-
-def list_passwords():
-    connection = sqlite3.connect(os.getenv('VAULT_NAME'))
-    cursor_obj = connection.cursor()
-    cursor_obj.execute("SELECT * FROM PASSWORD")
-    passwords = cursor_obj.fetchall()
-    connection.close()
-    return passwords
-
-def get_password_by_id(id):
-    connection = sqlite3.connect(os.getenv('VAULT_NAME'))
-    cursor_obj = connection.cursor()
-    cursor_obj.execute("SELECT * FROM PASSWORD WHERE Id = ?", (id,))
-    password = cursor_obj.fetchone()
-    connection.close()
-    if password:
-        return password[1]
-    else:
-        return None
-
-def delete_password_by_id(id):
-    connection = sqlite3.connect(os.getenv('VAULT_NAME'))
-    cursor_obj = connection.cursor()
-    cursor_obj.execute("DELETE FROM PASSWORD WHERE Id = ?", (id,))
-    connection.commit()
-    connection.close()
-    
-def update_saved_password(id, new_encrypted_password):
-    connection = sqlite3.connect(os.getenv('VAULT_NAME'))
-    cursor_obj = connection.cursor()
-    cursor_obj.execute("UPDATE PASSWORD SET Encrypted_password = ? WHERE Id = ?", (new_encrypted_password,id))
-    connection.commit()
-    connection.close()
+    query = "SELECT Recovery_key, Salt_recovery FROM USER LIMIT 1"
+    return execute_query(query, fetch_one=True)
 
 def update_master_password(new_hashed_password, new_salt):
-    connection = sqlite3.connect(os.getenv('VAULT_NAME'))
-    cursor_obj = connection.cursor()
-    cursor_obj.execute("UPDATE USER SET Password = ?, Salt_master = ? WHERE rowid = 1",(new_hashed_password,new_salt))
-    connection.commit()
-    connection.close()
+    query = "UPDATE USER SET Password = ?, Salt_master = ? WHERE rowid = 1"
+    params = (new_hashed_password, new_salt)
+    execute_query(query, params, commit=True)
 
 def update_recovery_key(new_hashed_recovery, new_salt):
-    connection = sqlite3.connect(os.getenv('VAULT_NAME'))
-    cursor_obj = connection.cursor()
-    cursor_obj.execute("UPDATE USER SET Recovery_key = ?, Salt_recovery = ? WHERE rowid = 1",(new_hashed_recovery,new_salt))
-    connection.commit()
-    connection.close()
+    query = "UPDATE USER SET Recovery_key = ?, Salt_recovery = ? WHERE rowid = 1"
+    params = (new_hashed_recovery, new_salt)
+    execute_query(query, params, commit=True)
+
+def add_password(encrypted_password, email, name):
+    query = """
+    INSERT INTO PASSWORD (Encrypted_password, Email, Name)
+    VALUES (?, ?, ?)
+    """
+    params = (encrypted_password, email, name)
+    execute_query(query, params, commit=True)
+
+def list_passwords():
+    query = "SELECT * FROM PASSWORD"
+    return execute_query(query, fetch_all=True)
+
+def get_password_by_id(id):
+    query = "SELECT Encrypted_password FROM PASSWORD WHERE Id = ?"
+    password = execute_query(query, (id,), fetch_one=True)
+    return password[0] if password else None
+
+def delete_password_by_id(id):
+    query = "DELETE FROM PASSWORD WHERE Id = ?"
+    execute_query(query, (id,), commit=True)
+
+def update_saved_password(id, new_encrypted_password):
+    query = "UPDATE PASSWORD SET Encrypted_password = ? WHERE Id = ?"
+    params = (new_encrypted_password, id)
+    execute_query(query, params, commit=True)
