@@ -71,14 +71,18 @@ def list():
     if not vault_already_exists():
             print(f"{Fore.RED}Error: Vault does not exist{Fore.RESET}")
             return
-    passwords = list_passwords()
-    if passwords:
-        print("{:<15}{:<30}{:<37}{:>}".format("Id","Name","Email","Password"))
-        print("-"*182)
-        for password in passwords:
-            print("{:<15}{:<30}{:<37}{:>}".format(password[0],password[3],password[2],password[1]))
+    master_password = getpass.getpass("Insert the master password:")
+    if master_password and login(master_password):
+        passwords = list_passwords()
+        if passwords:
+            print("{:<15}{:<30}{:<37}{:>}".format("Id","Name","Email","Password"))
+            print("-"*182)
+            for password in passwords:
+                print("{:<15}{:<30}{:<37}{:>}".format(password[0],password[3],password[2],password[1]))
+        else:
+            print(f"{Fore.RED}Error: No passwords found{Fore.RESET}")
     else:
-         print(f"{Fore.RED}Error: No passwords found{Fore.RESET}")
+        print(f"{Fore.RED}Error: A valid master password is required{Fore.RESET}")
 
 @click.command
 @click.option('-i','--id', prompt="Insert the id of the password you want to decrypt")
