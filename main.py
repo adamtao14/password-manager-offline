@@ -94,11 +94,15 @@ def decrypt(id,copy):
     if not vault_already_exists():
             print(f"{Fore.RED}Error: Vault does not exist{Fore.RESET}")
             return
-    master_password = getpass.getpass("Insert the master password: ")
+    master_password = getpass.getpass("Insert the master password:")
     if master_password:
         encrypted_password = get_password_by_id(id)
         if encrypted_password != None:
-            key = read_key_from_zip(master_password)
+            try:
+                key = read_key_from_zip(master_password)
+            except RuntimeError:
+                print(f"{Fore.RED}Error: A valid master password is required{Fore.RESET}")
+                return
             cipher = initialize_cipher(key)
             decrypted_password = decrypt_password(cipher, encrypted_password)
             print(f"{Fore.GREEN}Decrypted password: {decrypted_password}\n{Fore.RESET}")
