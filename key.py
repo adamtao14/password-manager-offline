@@ -30,19 +30,6 @@ def recovery_exists():
 def delete_key(file):
         os.remove(file)
 
-
-def derive_key_from_password(password, salt=b'i8u2387yrefh9pga', iterations=100_000):
-    kdf = PBKDF2HMAC(
-        algorithm=hashes.SHA256(),
-        length=32,
-        salt=salt,
-        iterations=iterations,
-        backend=default_backend()
-    )
-    key = base64.urlsafe_b64encode(kdf.derive(password.encode()))
-    return key
-
-
 def save_key(encryption_key, master_password):
     with pyzipper.AESZipFile(os.getenv('ZIP_NAME'),'w',compression=pyzipper.ZIP_LZMA,encryption=pyzipper.WZ_AES) as zf:
         zf.setpassword(master_password.encode('utf-8'))
@@ -52,7 +39,6 @@ def save_recovery_key(encryption_key, recovery_key):
     with pyzipper.AESZipFile(os.getenv('RECOVERY_ZIP_NAME'),'w',compression=pyzipper.ZIP_LZMA,encryption=pyzipper.WZ_AES) as zf:
         zf.setpassword(recovery_key.encode('utf-8'))
         zf.writestr(os.getenv('KEY_NAME'), encryption_key)
-
 
 def read_key_from_zip(master_password):
     with pyzipper.AESZipFile(os.getenv('ZIP_NAME')) as zf:
@@ -67,8 +53,6 @@ def read_key_from_recovery_zip(recovery_key):
         encryption_key = zf.read(os.getenv('KEY_NAME'))
     
     return encryption_key
-
-
 
 def generate_strong_password(length=16):
     all_characters = string.ascii_letters + string.digits + '!#$%&()*+-.<=>?@^_'
