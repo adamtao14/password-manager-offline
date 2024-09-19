@@ -9,7 +9,6 @@ def create_vault():
     print(f"Database '{os.getenv('VAULT_NAME')}' created successfully.")
     conn.close()
 
-
 def vault_already_exists():
     return os.path.isfile(os.getenv('VAULT_NAME'))
 

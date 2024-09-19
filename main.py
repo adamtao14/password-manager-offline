@@ -75,10 +75,10 @@ def list():
     if master_password and login(master_password):
         passwords = list_passwords()
         if passwords:
-            print("{:<15}{:<30}{:<37}{:>}".format("Id","Name","Email","Password"))
-            print("-"*182)
+            print("{:<15}{:<30}{:<37}".format("Id","Name","Email"))
+            print("-"*70)
             for password in passwords:
-                print("{:<15}{:<30}{:<37}{:>}".format(password[0],password[3],password[2],password[1]))
+                print("{:<15}{:<30}{:<37}".format(password[0],password[3],password[2]))
         else:
             print(f"{Fore.RED}Error: No passwords found{Fore.RESET}")
     else:

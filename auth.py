@@ -22,28 +22,20 @@ def check_hash(stored_salt, stored_hash, password_to_check):
 
 def validate_master_password(master_password):
         error_messages = ""
-        
         if not master_password:
             error_messages += 'Master password cannot be empty\n'
-        
         if len(master_password) < 12:
             error_messages += "Master password must be at least 12 characters long.\n"
-
         if not re.search(r'[A-Z]', master_password):
             error_messages += "Master password must contain at least one uppercase letter.\n"
-
         if not re.search(r'[a-z]', master_password):
             error_messages += "Master password must contain at least one lowercase letter.\n"
-
         if not re.search(r'[0-9]', master_password):
             error_messages += "Master password must contain at least one digit.\n"
-
         if not re.search(r'[!#$%&()*+-.<=>?@^_]', master_password):
             error_messages += "Master password must contain at least one special character.[!#$%&()*+-.<=>?@[]^_]\n"
-
         if re.search(r'\s', master_password):
             error_messages += "Master password cannot contain spaces.\n"
-
         return error_messages
 
 
