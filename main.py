@@ -16,30 +16,33 @@ def app_commands():
 @click.command()
 @click.option('-mp','--master-password', prompt='Enter a strong master password', help='The master password to create a new vault')
 def register(master_password):
-    """Create a new vault by registering a master password"""
-    if not vault_already_exists():
-        errors = validate_master_password(master_password)
-        if errors != "":
-            print(Fore.RED,errors)
+    repeat_master_password = input("Confirm master password:")
+    if repeat_master_password and (repeat_master_password == master_password):
+        """Create a new vault by registering a master password"""
+        if not vault_already_exists():
+            errors = validate_master_password(master_password)
+            if errors != "":
+                print(Fore.RED,errors)
+                print(Style.RESET_ALL)
+                return
+            create_vault()
+            create_tables()
+            recovery_key = generate_recovery_key()
+            salt_master,hashed_master_password = hash_password(master_password)
+            salt_recovery,hashed_recovery_key = hash_password(recovery_key)
+            create_user(salt_master,hashed_master_password,hashed_recovery_key,salt_recovery)
+            encryption_key = generate_key()
+            if not key_exists() and not recovery_exists():
+                save_key(encryption_key, master_password)
+                save_recovery_key(encryption_key, recovery_key)
+            print(Fore.GREEN,"Encryption key generated in",os.getenv('ZIP_NAME'))
+            print(Fore.YELLOW,"Your recovery key is: ", recovery_key)
+            print("The recovery key is the ONLY way to get your vault back in case you forget the master password, keep it safe")
             print(Style.RESET_ALL)
-            return
-        create_vault()
-        create_tables()
-        recovery_key = generate_recovery_key()
-        salt_master,hashed_master_password = hash_password(master_password)
-        salt_recovery,hashed_recovery_key = hash_password(recovery_key)
-        create_user(salt_master,hashed_master_password,hashed_recovery_key,salt_recovery)
-        encryption_key = generate_key()
-        if not key_exists() and not recovery_exists():
-            save_key(encryption_key, master_password)
-            save_recovery_key(encryption_key, recovery_key)
-        print(Fore.GREEN,"Encryption key generated in",os.getenv('ZIP_NAME'))
-        print(Fore.YELLOW,"Your recovery key is: ", recovery_key)
-        print("The recovery key is the ONLY way to get your vault back in case you forget the master password, keep it safe")
-        print(Style.RESET_ALL)
+        else:
+            print(Fore.RED,"Vault already exists, please use the login option to access your vault")
     else:
-        print(Fore.RED,"Vault already exists, please use the login option to access your vault")
-
+        print(Fore.RED,"Passwords do not match, please try again")
 @click.command
 @click.option('-p','--password')
 @click.option('-e','--email', prompt="Insert the email to save")
